@@ -1,3 +1,8 @@
+import os
+# Ensure HuggingFace and PyTorch use local cached models without hanging on network timeouts
+os.environ["HF_HUB_OFFLINE"] = "1"
+os.environ["TRANSFORMERS_OFFLINE"] = "1"
+
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware

@@ -132,6 +132,27 @@ export default function Dashboard() {
     return () => clearInterval(interval);
   }, [isGenerating, taskId]);
 
+  // Smooth progress ticker while awaiting agent node completion
+  useEffect(() => {
+    if (!isGenerating) return;
+
+    const ticker = setInterval(() => {
+      setPhases((prevPhases) => {
+        let changed = false;
+        const updated = prevPhases.map((phase) => {
+          if (phase.status === 'in_progress' && phase.progress < 90) {
+            changed = true;
+            return { ...phase, progress: Math.min(90, phase.progress + 6) };
+          }
+          return phase;
+        });
+        return changed ? updated : prevPhases;
+      });
+    }, 850);
+
+    return () => clearInterval(ticker);
+  }, [isGenerating]);
+
   const handleStart = async (config: any) => {
     setResult(null);
     setPhases(
