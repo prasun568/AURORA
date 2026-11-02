@@ -1,7 +1,14 @@
 import axios from 'axios';
 import { ReviewResult, User } from '../types';
 
-const API_BASE_URL = 'http://localhost:8000';
+// ---------------------------------------------------------------------------
+// API base URL: reads from env var so it works both locally and on Vercel.
+// Set VITE_API_URL in your Vercel project environment variables to your
+// deployed backend URL (e.g. https://aurora-backend.vercel.app).
+// Falls back to localhost for local development.
+// ---------------------------------------------------------------------------
+const API_BASE_URL =
+  (import.meta.env.VITE_API_URL as string | undefined) || 'http://localhost:8000';
 
 const client = axios.create({
   baseURL: API_BASE_URL,
@@ -89,13 +96,22 @@ export const api = {
     return res.data;
   },
 
-  exportLatex: async (taskId: string): Promise<string> => {
-    const res = await client.get(`/api/export/latex/${taskId}`, { responseType: 'text' });
+  exportLatex: async (taskId: string): Promise<Blob> => {
+    const res = await client.get(`/api/export/latex/${taskId}`, { responseType: 'blob' });
     return res.data;
   },
 
   exportBibtex: async (taskId: string): Promise<string> => {
     const res = await client.get(`/api/export/bibtex/${taskId}`, { responseType: 'text' });
     return res.data;
+  },
+
+  checkHealth: async (): Promise<boolean> => {
+    try {
+      const res = await client.get('/health', { timeout: 4000 });
+      return res.status === 200;
+    } catch {
+      return false;
+    }
   },
 };

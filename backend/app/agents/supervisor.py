@@ -104,7 +104,8 @@ class SupervisorAgent:
             "review_type": req_dict.get("review_type", "systematic"),
             "citation_style": req_dict.get("citation_style", "APA"),
             "template": req_dict.get("template", "standard"),
-            "writing_style": req_dict.get("writing_style", "academic"),
+            # "academic" is the default — polish is skipped unless another style is requested
+            "writing_style": req_dict.get("writing_style") or "academic",
             "date_start": req_dict.get("date_start") or req_dict.get("date_range_start"),
             "date_end": req_dict.get("date_end") or req_dict.get("date_range_end"),
             "max_papers": int(req_dict.get("max_papers") or 20),
@@ -115,6 +116,8 @@ class SupervisorAgent:
             "paper_summaries": [],
             "themes": [],
             "gaps": [],
+            "agreements": [],
+            "disagreements": [],
             "draft": "",
             "polished_draft": "",
             "citations": [],
@@ -133,11 +136,21 @@ class SupervisorAgent:
         async for event in self.app.astream(initial_state):
             for node_name, node_state in event.items():
                 final_state = node_state
+                step = node_state.get("current_step", "")
+                progress = node_state.get("progress", 0)
+
+                # Update fast memory registry for polling
+                try:
+                    from app.api.routes import update_task_progress
+                    update_task_progress(task_id, step, progress, node_name)
+                except Exception as ex:
+                    logger.debug(f"Could not update task registry for {task_id}: {ex}")
+
                 try:
                     await broadcast_update(task_id, {
                         "type": "progress",
-                        "step": node_state.get("current_step", ""),
-                        "progress": node_state.get("progress", 0),
+                        "step": step,
+                        "progress": progress,
                         "data": {
                             "subtopics": node_state.get("subtopics", []),
                             "papers_found": len(node_state.get("search_results", [])),

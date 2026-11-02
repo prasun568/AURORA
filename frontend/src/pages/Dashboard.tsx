@@ -90,13 +90,34 @@ export default function Dashboard() {
     }
   }, [messages, taskId]);
 
-  // Fallback Polling interval to ensure completion even if WS drops
+  // Live Polling interval to ensure real-time progression even if WS packets drop
   useEffect(() => {
     if (!isGenerating || !taskId) return;
 
     const interval = setInterval(async () => {
       try {
         const statusRes = await api.getStatus(taskId);
+
+        // Advance phases based on polling step
+        const step = (statusRes as any).step || '';
+        if (step in STEP_TO_PHASE_INDEX) {
+          const activeIdx = STEP_TO_PHASE_INDEX[step];
+          setPhases((prevPhases) =>
+            prevPhases.map((phase, idx) => {
+              if (idx < activeIdx) {
+                return { ...phase, status: 'completed', progress: 100 };
+              }
+              if (idx === activeIdx) {
+                return { ...phase, status: 'completed', progress: 100 };
+              }
+              if (idx === activeIdx + 1) {
+                return { ...phase, status: 'in_progress', progress: 50 };
+              }
+              return { ...phase, status: 'pending', progress: 0 };
+            })
+          );
+        }
+
         if (statusRes.status === 'completed') {
           const res = await api.getResult(taskId);
           setResult(res);
@@ -106,7 +127,7 @@ export default function Dashboard() {
       } catch (e) {
         // Silent catch during polling
       }
-    }, 3000);
+    }, 1500);
 
     return () => clearInterval(interval);
   }, [isGenerating, taskId]);
@@ -130,21 +151,23 @@ export default function Dashboard() {
   };
 
   return (
-    <div className="flex h-screen bg-slate-100 overflow-hidden font-sans">
+    <div className="flex h-screen bg-[#24090F] bg-library-grid text-[#F6EBD5] overflow-hidden font-sans">
       {/* Sidebar */}
       <Sidebar activeTab={activeTab} setActiveTab={setActiveTab} user={user} />
 
       {/* Main Content Area */}
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
-        <TopBar user={user} isConnected={isConnected} />
+        <TopBar user={user} isConnected={isConnected} isGenerating={isGenerating} />
 
         <div className="flex-1 overflow-y-auto p-6 md:p-8">
           {activeTab === 'new' && (
             <div className="max-w-5xl mx-auto space-y-6">
               <div>
-                <h1 className="text-2xl font-extrabold text-slate-900 tracking-tight">New Review Paper</h1>
-                <p className="text-sm text-slate-500 mt-1">
-                  Configure review criteria and dispatch the 11-agent autonomous systematic review engine.
+                <h1 className="text-2xl font-serif font-black tracking-wider uppercase text-[#F6EBD5]">
+                  Research Scribe & Inscription
+                </h1>
+                <p className="text-xs sm:text-sm font-academic text-[#C8B99F] mt-1">
+                  Configure research scope and dispatch the twelve-agent autonomous literature synthesis intelligence.
                 </p>
               </div>
 
@@ -157,28 +180,34 @@ export default function Dashboard() {
           )}
 
           {activeTab === 'history' && (
-            <div className="max-w-4xl mx-auto card">
-              <div className="flex items-center space-x-3 pb-4 border-b border-slate-100 mb-6">
-                <History className="w-5 h-5 text-aurora-600" />
-                <h2 className="text-lg font-bold text-slate-900">Review History</h2>
+            <div className="max-w-4xl mx-auto academia-card p-6 border border-[#75502F] bg-[#401923]/90">
+              <div className="flex items-center space-x-3 pb-4 border-b border-[#75502F]/60 mb-6">
+                <History className="w-5 h-5 text-[#C69B48]" />
+                <h2 className="text-lg font-serif font-bold tracking-wider uppercase text-[#F6EBD5]">
+                  Manuscript Vault
+                </h2>
               </div>
-              <p className="text-sm text-slate-500 text-center py-12">
-                No archived reviews found. Start a new systematic review from the dashboard.
+              <p className="text-sm font-academic text-[#C8B99F] text-center py-12">
+                No archived manuscripts found in this session. Initiate a new research synthesis from the Scribe.
               </p>
             </div>
           )}
 
           {activeTab === 'templates' && (
-            <div className="max-w-4xl mx-auto card">
-              <div className="flex items-center space-x-3 pb-4 border-b border-slate-100 mb-6">
-                <LayoutTemplate className="w-5 h-5 text-aurora-600" />
-                <h2 className="text-lg font-bold text-slate-900">Publishing Templates</h2>
+            <div className="max-w-4xl mx-auto academia-card p-6 border border-[#75502F] bg-[#401923]/90">
+              <div className="flex items-center space-x-3 pb-4 border-b border-[#75502F]/60 mb-6">
+                <LayoutTemplate className="w-5 h-5 text-[#C69B48]" />
+                <h2 className="text-lg font-serif font-bold tracking-wider uppercase text-[#F6EBD5]">
+                  Publishing Formats & Templates
+                </h2>
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 {['IEEE Conference', 'IEEE Journal', 'APA Journal', 'ACM Conference', 'Springer Nature LNCS', 'Elsevier Standard'].map((tmpl) => (
-                  <div key={tmpl} className="p-4 border border-slate-200 rounded-xl hover:border-aurora-400 transition-colors">
-                    <span className="font-semibold text-slate-900 text-sm block">{tmpl}</span>
-                    <span className="text-xs text-slate-500 mt-1 block">Standard verified citation formatting and column layout.</span>
+                  <div key={tmpl} className="p-4 bg-[#24090F]/80 border border-[#75502F] rounded-xl hover:border-[#C69B48] transition-colors">
+                    <span className="font-serif font-bold text-[#E5C477] text-sm block">{tmpl}</span>
+                    <span className="text-xs font-academic text-[#C8B99F] mt-1 block">
+                      Authentic peer-reviewed typography and automated reference formatting.
+                    </span>
                   </div>
                 ))}
               </div>
@@ -186,25 +215,27 @@ export default function Dashboard() {
           )}
 
           {activeTab === 'settings' && (
-            <div className="max-w-4xl mx-auto card">
-              <div className="flex items-center space-x-3 pb-4 border-b border-slate-100 mb-6">
-                <Settings className="w-5 h-5 text-aurora-600" />
-                <h2 className="text-lg font-bold text-slate-900">Settings & Agent Preferences</h2>
+            <div className="max-w-4xl mx-auto academia-card p-6 border border-[#75502F] bg-[#401923]/90">
+              <div className="flex items-center space-x-3 pb-4 border-b border-[#75502F]/60 mb-6">
+                <Settings className="w-5 h-5 text-[#C69B48]" />
+                <h2 className="text-lg font-serif font-bold tracking-wider uppercase text-[#F6EBD5]">
+                  Twelve Agents & Architecture Settings
+                </h2>
               </div>
-              <div className="space-y-4 text-sm text-slate-600">
-                <div className="flex items-center justify-between p-3.5 bg-slate-50 rounded-lg border border-slate-200">
+              <div className="space-y-4 text-sm font-academic text-[#F6EBD5]">
+                <div className="flex items-center justify-between p-3.5 bg-[#24090F]/80 rounded-xl border border-[#75502F]">
                   <div>
-                    <span className="font-semibold text-slate-900 block">LLM Provider</span>
-                    <span className="text-xs text-slate-500">Groq Llama 3.3 70B & Gemini 1.5 Flash</span>
+                    <span className="font-serif font-bold text-[#F6EBD5] block">LangGraph Orchestrator</span>
+                    <span className="text-xs text-[#C8B99F]">Groq Llama 3.3 70B & Gemini 2.5 Flash</span>
                   </div>
-                  <span className="badge bg-emerald-50 text-emerald-700">Connected</span>
+                  <span className="badge">Twelve Agents Active</span>
                 </div>
-                <div className="flex items-center justify-between p-3.5 bg-slate-50 rounded-lg border border-slate-200">
+                <div className="flex items-center justify-between p-3.5 bg-[#24090F]/80 rounded-xl border border-[#75502F]">
                   <div>
-                    <span className="font-semibold text-slate-900 block">VeriCite™ Validation</span>
-                    <span className="text-xs text-slate-500">CrossRef live API & SBERT Embedding Similarity</span>
+                    <span className="font-serif font-bold text-[#F6EBD5] block">VeriCite™ Validation Pipeline</span>
+                    <span className="text-xs text-[#C8B99F]">CrossRef Scholarly Registry & SBERT Embeddings</span>
                   </div>
-                  <span className="badge bg-emerald-50 text-emerald-700">Enforced</span>
+                  <span className="badge">Three Layers Enforced</span>
                 </div>
               </div>
             </div>

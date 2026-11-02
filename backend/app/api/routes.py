@@ -30,6 +30,15 @@ security = HTTPBearer(auto_error=False)
 task_registry: Dict[str, Dict[str, Any]] = {}
 
 
+def update_task_progress(task_id: str, step: str, progress: float, phase: str):
+    """Updates live progress in task_registry for polling and status endpoints."""
+    if task_id in task_registry:
+        task_registry[task_id]["status"] = "in_progress"
+        task_registry[task_id]["step"] = step
+        task_registry[task_id]["progress"] = progress
+        task_registry[task_id]["phase"] = phase
+
+
 # --- Password & Token Helpers ---
 
 def hash_password(pw: str) -> str:
@@ -272,7 +281,9 @@ async def get_review_status(task_id: str):
         cached = task_registry[task_id]
         return {
             "status": cached.get("status", "pending"),
-            "progress": cached.get("progress", 0)
+            "progress": cached.get("progress", 0),
+            "step": cached.get("step", ""),
+            "phase": cached.get("phase", "")
         }
 
     task = await db_get_task(task_id)
@@ -280,7 +291,10 @@ async def get_review_status(task_id: str):
         raise HTTPException(status_code=404, detail="Review task not found")
 
     return {
-        "status": task.get("status", "pending")
+        "status": task.get("status", "pending"),
+        "progress": 100 if task.get("status") == "completed" else 0,
+        "step": "",
+        "phase": ""
     }
 
 
@@ -356,3 +370,135 @@ async def list_citation_styles():
         "Vancouver",
         "BibTeX"
     ]
+
+
+# --- Export Endpoints ---
+
+@router.get("/export/pdf/{task_id}")
+async def export_pdf(task_id: str):
+    from fastapi.responses import Response
+    from app.utils.exporters import generate_pdf
+
+    md_content = ""
+    topic = "Systematic Literature Review"
+    citations = []
+    bibtex = ""
+
+    if task_id in task_registry and task_registry[task_id].get("final_state"):
+        state = task_registry[task_id]["final_state"]
+        md_content = state.get("polished_draft") or state.get("draft") or ""
+        topic = state.get("topic") or topic
+        citations = state.get("citations", [])
+        bibtex = state.get("bibtex", "")
+    else:
+        output = await db_get_review_output(task_id)
+        if output:
+            md_content = output.get("content_markdown", "")
+            citations = output.get("citations", [])
+            bibtex = output.get("bibtex", "")
+        task = await db_get_task(task_id)
+        if task:
+            topic = task.get("topic") or topic
+
+    if not md_content:
+        raise HTTPException(status_code=404, detail="Review document not found for export")
+
+    pdf_bytes = generate_pdf(md_content, topic, citations, bibtex)
+    return Response(
+        content=pdf_bytes,
+        media_type="application/pdf",
+        headers={"Content-Disposition": f"attachment; filename=aurora-review-{task_id[:8]}.pdf"}
+    )
+
+
+@router.get("/export/docx/{task_id}")
+async def export_docx(task_id: str):
+    from fastapi.responses import Response
+    from app.utils.exporters import generate_docx
+
+    md_content = ""
+    topic = "Systematic Literature Review"
+    citations = []
+
+    if task_id in task_registry and task_registry[task_id].get("final_state"):
+        state = task_registry[task_id]["final_state"]
+        md_content = state.get("polished_draft") or state.get("draft") or ""
+        topic = state.get("topic") or topic
+        citations = state.get("citations", [])
+    else:
+        output = await db_get_review_output(task_id)
+        if output:
+            md_content = output.get("content_markdown", "")
+            citations = output.get("citations", [])
+        task = await db_get_task(task_id)
+        if task:
+            topic = task.get("topic") or topic
+
+    if not md_content:
+        raise HTTPException(status_code=404, detail="Review document not found for export")
+
+    docx_bytes = generate_docx(md_content, topic, citations)
+    return Response(
+        content=docx_bytes,
+        media_type="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+        headers={"Content-Disposition": f"attachment; filename=aurora-review-{task_id[:8]}.docx"}
+    )
+
+
+@router.get("/export/latex/{task_id}")
+async def export_latex(task_id: str):
+    from fastapi.responses import Response
+    from app.utils.exporters import generate_latex_zip
+
+    md_content = ""
+    topic = "Systematic Literature Review"
+    citations = []
+    bibtex = ""
+
+    if task_id in task_registry and task_registry[task_id].get("final_state"):
+        state = task_registry[task_id]["final_state"]
+        md_content = state.get("polished_draft") or state.get("draft") or ""
+        topic = state.get("topic") or topic
+        citations = state.get("citations", [])
+        bibtex = state.get("bibtex", "")
+    else:
+        output = await db_get_review_output(task_id)
+        if output:
+            md_content = output.get("content_markdown", "")
+            citations = output.get("citations", [])
+            bibtex = output.get("bibtex", "")
+        task = await db_get_task(task_id)
+        if task:
+            topic = task.get("topic") or topic
+
+    if not md_content:
+        raise HTTPException(status_code=404, detail="Review document not found for export")
+
+    latex_zip = generate_latex_zip(md_content, topic, citations, bibtex)
+    return Response(
+        content=latex_zip,
+        media_type="application/zip",
+        headers={"Content-Disposition": f"attachment; filename=aurora-latex-{task_id[:8]}.zip"}
+    )
+
+
+@router.get("/export/bibtex/{task_id}")
+async def export_bibtex(task_id: str):
+    from fastapi.responses import Response
+
+    bibtex = ""
+    if task_id in task_registry and task_registry[task_id].get("final_state"):
+        bibtex = task_registry[task_id]["final_state"].get("bibtex", "")
+    else:
+        output = await db_get_review_output(task_id)
+        if output:
+            bibtex = output.get("bibtex", "")
+
+    if not bibtex:
+        bibtex = f"@article{{aurora_{task_id[:8]},\n  title={{Systematic Literature Review}},\n  author={{AURORA Multi-Agent Framework}},\n  year={{{datetime.now().year}}}\n}}"
+
+    return Response(
+        content=bibtex,
+        media_type="application/x-bibtex",
+        headers={"Content-Disposition": f"attachment; filename=references-{task_id[:8]}.bib"}
+    )

@@ -1,7 +1,8 @@
 import React from 'react';
-import { LayoutDashboard, History, LayoutTemplate, Settings, Sparkles, LogOut } from 'lucide-react';
+import { LayoutDashboard, History, LayoutTemplate, Settings, Scroll, LogOut, ArrowLeft, BookOpen, Feather } from 'lucide-react';
 import { User } from '../types';
 import { useAuth } from '../hooks/useAuth';
+import { Link } from 'react-router-dom';
 
 interface SidebarProps {
   activeTab: 'new' | 'history' | 'templates' | 'settings';
@@ -13,31 +14,39 @@ export default function Sidebar({ activeTab, setActiveTab, user }: SidebarProps)
   const { logout } = useAuth();
 
   const navItems = [
-    { id: 'new' as const, label: 'Dashboard', icon: LayoutDashboard },
-    { id: 'history' as const, label: 'History', icon: History },
-    { id: 'templates' as const, label: 'Templates', icon: LayoutTemplate },
-    { id: 'settings' as const, label: 'Settings', icon: Settings },
+    { id: 'new' as const, label: 'Research Scribe', icon: Feather },
+    { id: 'history' as const, label: 'Manuscript Vault', icon: History },
+    { id: 'templates' as const, label: 'Publishing Formats', icon: LayoutTemplate },
+    { id: 'settings' as const, label: 'Twelve Agents', icon: Settings },
   ];
 
   return (
-    <aside className="w-[240px] bg-white border-r border-slate-200 flex flex-col justify-between shrink-0 h-screen select-none">
+    <aside className="w-[250px] bg-[#24090F] border-r border-[#75502F] flex flex-col justify-between shrink-0 h-screen select-none text-[#F6EBD5]">
       {/* Top Header & Navigation */}
       <div>
         {/* Logo Section */}
-        <div className="h-16 px-5 flex items-center space-x-3 border-b border-slate-100">
-          <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-aurora-600 via-indigo-600 to-purple-600 flex items-center justify-center text-white shadow-md shadow-aurora-500/20">
-            <Sparkles className="w-5 h-5" />
-          </div>
-          <div>
-            <span className="font-extrabold text-xl tracking-tight gradient-text">AURORA</span>
-            <span className="block text-[10px] font-bold tracking-wider text-slate-400 uppercase -mt-0.5">
-              Review AI
-            </span>
-          </div>
+        <div className="h-20 px-5 flex items-center justify-between border-b border-[#75502F]">
+          <Link to="/" className="flex items-center space-x-3 group">
+            <div className="w-11 h-11 flex items-center justify-center shrink-0">
+              <img
+                src="/aurora-logo.png"
+                alt="AURORA Emblem"
+                className="w-full h-full object-contain drop-shadow-[0_0_12px_rgba(229,196,119,0.4)]"
+              />
+            </div>
+            <div>
+              <span className="font-serif font-extrabold text-lg tracking-widest text-[#F6EBD5] group-hover:text-[#E5C477] transition-colors">
+                AURORA
+              </span>
+              <span className="block text-[9px] font-serif font-bold tracking-widest text-[#C69B48] uppercase -mt-1">
+                Workspace
+              </span>
+            </div>
+          </Link>
         </div>
 
         {/* Navigation items */}
-        <nav className="p-3 space-y-1 mt-2">
+        <nav className="p-3 space-y-2 mt-3">
           {navItems.map((item) => {
             const Icon = item.icon;
             const isActive = activeTab === item.id;
@@ -45,13 +54,13 @@ export default function Sidebar({ activeTab, setActiveTab, user }: SidebarProps)
               <button
                 key={item.id}
                 onClick={() => setActiveTab(item.id)}
-                className={`w-full flex items-center space-x-3 px-3.5 py-2.5 rounded-xl text-sm font-semibold transition-all duration-150 transform hover:scale-[1.02] active:scale-[0.95] ${
+                className={`w-full flex items-center space-x-3 px-3.5 py-3 rounded-xl text-xs font-serif font-bold tracking-wider uppercase transition-all duration-150 ${
                   isActive
-                    ? 'bg-aurora-600 text-white shadow-md shadow-aurora-600/25'
-                    : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
+                    ? 'bg-[#350E18] border border-[#C69B48] text-[#E5C477] shadow-lg shadow-[#24090F]'
+                    : 'text-[#C8B99F] hover:text-[#F6EBD5] hover:bg-[#350E18]/60 border border-transparent'
                 }`}
               >
-                <Icon className={`w-4 h-4 ${isActive ? 'text-white' : 'text-slate-400'}`} />
+                <Icon className={`w-4 h-4 ${isActive ? 'text-[#E5C477]' : 'text-[#C69B48]'}`} />
                 <span>{item.label}</span>
               </button>
             );
@@ -59,25 +68,39 @@ export default function Sidebar({ activeTab, setActiveTab, user }: SidebarProps)
         </nav>
       </div>
 
-      {/* User Info & Logout at Bottom */}
-      <div className="p-3 border-t border-slate-100 bg-slate-50/50">
-        <div className="flex items-center space-x-3 p-2 rounded-xl">
-          <div className="w-9 h-9 rounded-full bg-gradient-to-tr from-aurora-600 to-indigo-600 text-white flex items-center justify-center font-bold text-sm shadow-sm shrink-0">
-            {user?.name ? user.name[0].toUpperCase() : user?.email ? user.email[0].toUpperCase() : 'U'}
+      {/* Bottom User Profile Section */}
+      <div className="p-3 border-t border-[#75502F]">
+        <div className="flex items-center justify-between p-2.5 rounded-xl bg-[#350E18] border border-[#75502F]">
+          <div className="flex items-center space-x-2.5 min-w-0">
+            <div className="w-8 h-8 rounded bg-gradient-to-tr from-[#C69B48] to-[#E5C477] text-[#24090F] flex items-center justify-center text-xs font-serif font-bold shrink-0">
+              {user?.name ? user.name[0].toUpperCase() : 'A'}
+            </div>
+            <div className="min-w-0 flex-1">
+              <span className="text-xs font-serif font-bold text-[#F6EBD5] truncate block">
+                {user?.name || user?.email?.split('@')[0] || 'Scholar'}
+              </span>
+              <span className="text-[10px] font-academic text-[#C8B99F] truncate block">
+                {user?.email || 'Authenticated'}
+              </span>
+            </div>
           </div>
-          <div className="min-w-0 flex-1">
-            <p className="text-xs font-bold text-slate-900 truncate">{user?.name || 'Researcher'}</p>
-            <p className="text-[11px] text-slate-500 truncate">{user?.email || 'user@aurora.ai'}</p>
-          </div>
+
+          <button
+            onClick={logout}
+            title="Sign Out"
+            className="p-1.5 text-[#C8B99F] hover:text-[#E5C477] hover:bg-[#24090F] rounded-lg transition-colors"
+          >
+            <LogOut className="w-4 h-4" />
+          </button>
         </div>
 
-        <button
-          onClick={logout}
-          className="w-full mt-2 flex items-center justify-center space-x-2 px-3 py-2 text-xs font-medium text-red-600 hover:bg-red-50 rounded-lg transition-colors border border-transparent hover:border-red-100"
+        <Link
+          to="/"
+          className="mt-2 w-full py-2 px-3 text-[11px] font-serif uppercase tracking-widest text-[#C8B99F] hover:text-[#E5C477] flex items-center justify-center space-x-1.5 transition-colors"
         >
-          <LogOut className="w-3.5 h-3.5" />
-          <span>Log out</span>
-        </button>
+          <ArrowLeft className="w-3 h-3" />
+          <span>Exit to Great Hall</span>
+        </Link>
       </div>
     </aside>
   );

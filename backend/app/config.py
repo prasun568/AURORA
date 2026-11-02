@@ -25,8 +25,10 @@ class Settings(BaseSettings):
     debug: bool = True
 
     # Model Defaults
+    # Planner and Screener stay on Groq (fast, cheap planning tasks)
     groq_model: str = "llama-3.3-70b-versatile"
-    gemini_model: str = "gemini-1.5-flash"
+    # Writer, Analyzer, QC, Reader all use Gemini 2.0 Flash
+    gemini_model: str = "gemini-2.0-flash"
     sbert_model: str = "all-MiniLM-L6-v2"
 
     # Uppercase aliases for compatibility

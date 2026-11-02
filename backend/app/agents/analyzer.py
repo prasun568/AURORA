@@ -2,7 +2,8 @@ import json
 import logging
 import re
 from typing import Any, Dict, List
-from langchain_groq import ChatGroq
+
+from langchain_google_genai import ChatGoogleGenerativeAI
 from app.agents.state import ResearchState
 from app.config import settings
 
@@ -48,7 +49,7 @@ def _parse_analysis_json(raw_text: str, default_paper_count: int) -> Dict[str, A
         ],
         "gaps": [
             {
-                "description": "Lack of standardized holistic evaluation benchmarks across heterogeneous environments",
+                "description": "Lack of standardised holistic evaluation benchmarks across heterogeneous environments",
                 "severity": "high"
             },
             {
@@ -62,11 +63,11 @@ def _parse_analysis_json(raw_text: str, default_paper_count: int) -> Dict[str, A
         ],
         "agreements": [
             "Modular architectures provide superior adaptability compared to monolithic designs",
-            "Verification and validation remain critical bottlenecks"
+            "Verification and validation remain critical bottlenecks across surveyed systems"
         ],
         "disagreements": [
-            "Trade-offs between fine-tuning vs. dynamic in-context retrieval",
-            "Optimal balancing between latency and reasoning depth"
+            "Trade-offs between fine-tuning vs. dynamic in-context retrieval are unresolved",
+            "Optimal balancing between latency and reasoning depth remains contested"
         ],
         "taxonomy": [
             {"approach": "Modular/Multi-agent", "papers": []},
@@ -77,33 +78,41 @@ def _parse_analysis_json(raw_text: str, default_paper_count: int) -> Dict[str, A
 
 async def analyzer_node(state: ResearchState) -> ResearchState:
     summaries: List[Dict[str, Any]] = state.get("paper_summaries", [])
+
+    # Use up to 40 summaries for richer analysis
     summaries_text = "\n\n".join([
-        f"Paper {i+1}:\n"
+        f"Paper {i + 1}:\n"
         f"Title: {s.get('title', 'N/A')}\n"
-        f"DOI: {s.get('doi', 'N/A')}\n"
+        f"DOI/source_id: {s.get('doi', 'N/A')}\n"
         f"Methodology: {s.get('methodology', 'N/A')}\n"
         f"Findings: {s.get('findings', 'N/A')}\n"
         f"Limitations: {s.get('limitations', 'N/A')}\n"
         f"Future Work: {s.get('future_work', 'N/A')}"
-        for i, s in enumerate(summaries[:30])
+        for i, s in enumerate(summaries[:40])
     ])
 
     topic = state.get("topic", "Research Topic")
     prompt = (
-        f"Analyze these paper summaries for a review paper on '{topic}'. Return JSON with:\n"
-        f"themes (list of {{name, description, paper_count}}),\n"
-        f"gaps (list of {{description, severity}}),\n"
-        f"agreements (list of strings),\n"
-        f"disagreements (list of strings),\n"
-        f"taxonomy (list of {{approach, papers}})\n\n"
-        f"Paper summaries:\n{summaries_text}\n\n"
-        f"Output ONLY valid JSON."
+        f"You are a senior research analyst performing thematic synthesis for a systematic review "
+        f"on '{topic}'. Analyse the {len(summaries[:40])} paper summaries below and return JSON with:\n\n"
+        f"  themes       : list of {{name, description, paper_count}}\n"
+        f"                 (3-6 themes; each must cover ≥2 papers)\n"
+        f"  gaps         : list of {{description, severity}}  (severity: high/medium/low)\n"
+        f"                 (5-8 specific, actionable gaps grounded in the papers)\n"
+        f"  agreements   : list of strings — claims ALL or MOST papers agree on\n"
+        f"  disagreements: list of strings — claims papers contradict each other on\n"
+        f"  taxonomy     : list of {{approach, papers}} classifying study designs\n\n"
+        f"For agreements/disagreements, cite specific paper titles where possible.\n"
+        f"Output ONLY valid JSON — no markdown fences, no commentary.\n\n"
+        f"Paper summaries:\n{summaries_text}"
     )
 
-    llm = ChatGroq(
-        model=settings.groq_model,
-        groq_api_key=settings.groq_api_key,
-        temperature=0.1
+    # Analyzer switches to Gemini 2.5 Flash for deeper synthesis
+    llm = ChatGoogleGenerativeAI(
+        model=settings.gemini_model,
+        google_api_key=settings.gemini_api_key,
+        temperature=0.1,
+        max_output_tokens=4096,
     )
 
     try:
@@ -116,6 +125,9 @@ async def analyzer_node(state: ResearchState) -> ResearchState:
 
     state["themes"] = analysis_data.get("themes", [])
     state["gaps"] = analysis_data.get("gaps", [])
+    # Surface agreements and disagreements so the writer can cite them
+    state["agreements"] = analysis_data.get("agreements", [])
+    state["disagreements"] = analysis_data.get("disagreements", [])
     state["current_step"] = "analysis_complete"
     state["progress"] = 65
     return state

@@ -39,7 +39,8 @@ async def citation_validator_node(state: ResearchState) -> ResearchState:
         result = await engine.verify_claim(
             claim,
             doi=source.get("doi"),
-            title_hint=source.get("title")
+            title_hint=source.get("title"),
+            paper=source
         )
         verified.append(result)
         checked_markers.append(marker)

@@ -26,6 +26,8 @@ class ResearchState(TypedDict, total=False):
     paper_summaries: List[Dict[str, Any]]
     themes: List[Dict[str, Any]]
     gaps: List[Dict[str, Any]]
+    agreements: List[str]      # cross-paper consensus claims (from analyzer)
+    disagreements: List[str]   # contested/diverging claims (from analyzer)
 
     # Drafting & Content Generation
     draft: Optional[str]

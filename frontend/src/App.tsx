@@ -27,16 +27,15 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
 export default function App() {
   return (
     <Routes>
+      {/* Public Landing Page Before Login */}
+      <Route path="/" element={<Landing />} />
+      <Route path="/landing" element={<Landing />} />
+
+      {/* Auth Pages */}
       <Route path="/login" element={<Login />} />
       <Route path="/signup" element={<Signup />} />
-      <Route
-        path="/landing"
-        element={
-          <ProtectedRoute>
-            <Landing />
-          </ProtectedRoute>
-        }
-      />
+
+      {/* Protected Generator Dashboard */}
       <Route
         path="/dashboard"
         element={
@@ -45,8 +44,9 @@ export default function App() {
           </ProtectedRoute>
         }
       />
-      <Route path="/" element={<Navigate to="/login" replace />} />
-      <Route path="*" element={<Navigate to="/login" replace />} />
+
+      {/* Fallback */}
+      <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   );
 }

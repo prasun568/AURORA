@@ -2,7 +2,8 @@ import json
 import logging
 import re
 from typing import Any, Dict
-from langchain_groq import ChatGroq
+
+from langchain_google_genai import ChatGoogleGenerativeAI
 from app.agents.state import ResearchState
 from app.config import settings
 
@@ -33,22 +34,30 @@ def _parse_qc_json(raw_text: str) -> Dict[str, Any]:
 
 async def quality_control_node(state: ResearchState) -> ResearchState:
     draft = state.get("polished_draft") or state.get("draft") or ""
-    sample_text = draft[:4000]
+    # Evaluate a generous 8 000-char sample — enough to catch structural issues
+    sample_text = draft[:8000]
 
     prompt = (
-        "Evaluate this academic review paper on: factual_accuracy, completeness, "
-        "logical_flow, citation_coverage, bias, clarity (each 0-100).\n"
-        "Return JSON: {status, confidence, issues, suggestions}.\n"
-        "status = 'verified' if avg >= 85, 'needs_revision' if < 85, "
-        "'conflict' if contradictions found.\n\n"
-        f"Draft snippet:\n{sample_text}\n\n"
+        "You are a rigorous academic quality-control reviewer.\n"
+        "Evaluate this academic review paper excerpt on six dimensions:\n"
+        "  factual_accuracy, completeness, logical_flow,\n"
+        "  citation_coverage, bias, clarity  (each scored 0-100)\n\n"
+        "Return JSON (no markdown fences) with these exact keys:\n"
+        "  status      : 'verified' if average ≥ 85, 'needs_revision' if < 85,\n"
+        "                'conflict' if direct contradictions are found\n"
+        "  confidence  : integer 0-100 (the average of the six scores)\n"
+        "  issues      : list of specific, actionable issues found\n"
+        "  suggestions : list of concrete improvements\n\n"
+        f"Draft excerpt:\n{sample_text}\n\n"
         "Output ONLY valid JSON."
     )
 
-    llm = ChatGroq(
-        model=settings.groq_model,
-        groq_api_key=settings.groq_api_key,
-        temperature=0.1
+    # Quality control uses Gemini 2.5 Flash for nuanced academic judgement
+    llm = ChatGoogleGenerativeAI(
+        model=settings.gemini_model,
+        google_api_key=settings.gemini_api_key,
+        temperature=0.1,
+        max_output_tokens=2048,
     )
 
     try:

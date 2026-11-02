@@ -109,16 +109,16 @@ export default function ReviewConfig({
   };
 
   return (
-    <div className="card shadow-sm border border-slate-200 bg-white">
+    <div className="academia-card p-6 sm:p-8 border border-[#75502F] bg-[#401923]/90 text-[#F6EBD5] shadow-2xl">
       <form onSubmit={handleSubmit} className="space-y-8">
         {/* SECTION 1: Research Topic Textarea */}
         <div>
           <div className="flex items-center justify-between mb-2">
-            <label className="label text-base font-bold text-slate-900">
-              Research Topic or Question <span className="text-red-500">*</span>
+            <label className="label text-sm font-serif font-bold text-[#E5C477] uppercase tracking-wider">
+              Research Inquiry or Topic <span className="text-[#C69B48]">*</span>
             </label>
-            <span className={`text-xs font-mono ${topic.length > 450 ? 'text-amber-600 font-bold' : 'text-slate-400'}`}>
-              {topic.length}/500 chars
+            <span className={`text-xs font-mono ${topic.length > 450 ? 'text-[#E5C477] font-bold' : 'text-[#C8B99F]/70'}`}>
+              {topic.length}/500 glyphs
             </span>
           </div>
           <textarea
@@ -127,16 +127,16 @@ export default function ReviewConfig({
             onChange={(e) => setTopic(e.target.value)}
             disabled={isGenerating}
             rows={3}
-            placeholder="e.g. Multi-agent Reinforcement Learning in Autonomous Driving Systems: A Systematic Review of Safety and Coordination Protocols"
-            className="input-field text-sm leading-relaxed resize-none"
+            placeholder="e.g. Epistemic Boundaries of Multi-Agent Reinforcement Learning in Autonomous Driving: A Systematic Review of Coordination Protocols"
+            className="input-field text-sm font-academic leading-relaxed resize-none"
             required
           />
         </div>
 
         {/* SECTION 2: 7 Interactive Review Type Cards */}
         <div>
-          <label className="label text-sm font-bold text-slate-900 mb-2.5">
-            Review Type Methodology
+          <label className="label text-sm font-serif font-bold text-[#E5C477] uppercase tracking-wider mb-2.5">
+            Scholarly Review Methodology
           </label>
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
             {reviewTypes.map((t) => {
@@ -149,17 +149,17 @@ export default function ReviewConfig({
                   disabled={isGenerating}
                   className={`p-3.5 text-left rounded-xl border transition-all duration-150 transform hover:scale-[1.02] active:scale-[0.95] flex flex-col justify-between ${
                     isSelected
-                      ? 'border-2 border-aurora-500 bg-aurora-50 shadow-sm'
-                      : 'border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50/50'
+                      ? 'border-2 border-[#C69B48] bg-[#350E18] text-[#E5C477] shadow-lg shadow-[#24090F]'
+                      : 'border-[#75502F]/70 bg-[#24090F]/70 hover:border-[#C69B48]/50 text-[#C8B99F]'
                   }`}
                 >
                   <div className="flex items-center justify-between mb-1.5">
-                    <span className={`font-bold text-xs sm:text-sm ${isSelected ? 'text-aurora-700' : 'text-slate-900'}`}>
+                    <span className={`font-serif font-bold text-xs sm:text-sm ${isSelected ? 'text-[#E5C477]' : 'text-[#F6EBD5]'}`}>
                       {t.name}
                     </span>
-                    {isSelected && <CheckCircle2 className="w-4 h-4 text-aurora-600 shrink-0" />}
+                    {isSelected && <CheckCircle2 className="w-4 h-4 text-[#C69B48] shrink-0" />}
                   </div>
-                  <p className="text-[11px] text-slate-500 leading-snug">{t.desc}</p>
+                  <p className="text-[11px] font-academic text-[#C8B99F] leading-snug">{t.desc}</p>
                 </button>
               );
             })}
@@ -169,31 +169,31 @@ export default function ReviewConfig({
         {/* SECTION 3: Citation Style & Template Dropdowns */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
           <div>
-            <label className="label text-sm font-semibold text-slate-900">Citation Style</label>
+            <label className="label text-xs font-serif font-bold text-[#E5C477] uppercase tracking-wider">Citation Standard</label>
             <select
               value={citationStyle}
               onChange={(e) => setCitationStyle(e.target.value as CitationStyle)}
               disabled={isGenerating}
-              className="input-field"
+              className="input-field bg-[#24090F] border-[#75502F] text-[#F6EBD5] font-serif"
             >
               {citationStyles.map((cs) => (
-                <option key={cs} value={cs}>
-                  {cs} Citation Standard
+                <option key={cs} value={cs} className="bg-[#24090F] text-[#F6EBD5]">
+                  {cs} Citation Format
                 </option>
               ))}
             </select>
           </div>
 
           <div>
-            <label className="label text-sm font-semibold text-slate-900">Publishing Template</label>
+            <label className="label text-xs font-serif font-bold text-[#E5C477] uppercase tracking-wider">Publishing Template</label>
             <select
               value={template}
               onChange={(e) => setTemplate(e.target.value)}
               disabled={isGenerating}
-              className="input-field"
+              className="input-field bg-[#24090F] border-[#75502F] text-[#F6EBD5] font-serif"
             >
               {templates.map((tpl) => (
-                <option key={tpl} value={tpl}>
+                <option key={tpl} value={tpl} className="bg-[#24090F] text-[#F6EBD5]">
                   {tpl}
                 </option>
               ))}
@@ -201,19 +201,19 @@ export default function ReviewConfig({
           </div>
         </div>
 
-        {/* Custom DOCX Dropzone (only shown if Custom DOCX) */}
+        {/* Custom DOCX Dropzone */}
         {template === 'Custom DOCX' && (
-          <div className="p-4 bg-slate-50 border border-dashed border-slate-300 rounded-xl space-y-4 animate-fade-in">
+          <div className="p-4 bg-[#24090F]/70 border border-dashed border-[#75502F] rounded-xl space-y-4">
             <div>
-              <label className="label text-xs font-bold text-slate-800">
-                Upload Custom Word Template (.docx)
+              <label className="label text-xs font-serif font-bold text-[#E5C477]">
+                Upload Custom Word Manuscript (.docx)
               </label>
-              <label className="flex flex-col items-center justify-center border-2 border-dashed border-slate-300 rounded-xl p-4 cursor-pointer hover:bg-slate-100/70 transition-colors">
-                <UploadCloud className="w-8 h-8 text-slate-400 mb-1" />
-                <span className="text-xs font-semibold text-aurora-600">
-                  {uploadedFile ? uploadedFile.name : 'Click or drag .docx file to upload'}
+              <label className="flex flex-col items-center justify-center border-2 border-dashed border-[#75502F] rounded-xl p-4 cursor-pointer hover:bg-[#350E18] transition-colors">
+                <UploadCloud className="w-8 h-8 text-[#C69B48] mb-1" />
+                <span className="text-xs font-serif font-semibold text-[#E5C477]">
+                  {uploadedFile ? uploadedFile.name : 'Select or drag .docx file to inscribe'}
                 </span>
-                <span className="text-[10px] text-slate-400 mt-0.5">Maximum file size: 10MB</span>
+                <span className="text-[10px] text-[#C8B99F] mt-0.5">Maximum file size: 10MB</span>
                 <input
                   type="file"
                   accept=".docx"
@@ -224,8 +224,8 @@ export default function ReviewConfig({
             </div>
 
             <div>
-              <label className="label text-xs font-bold text-slate-800">
-                AI Formatting Description
+              <label className="label text-xs font-serif font-bold text-[#E5C477]">
+                AI Formatting Inscription
               </label>
               <textarea
                 value={aiFormatDescription}
@@ -240,7 +240,7 @@ export default function ReviewConfig({
 
         {/* SECTION 4: Writing Style (3 Radio Cards) */}
         <div>
-          <label className="label text-sm font-bold text-slate-900 mb-2">Writing Style</label>
+          <label className="label text-xs font-serif font-bold text-[#E5C477] uppercase tracking-wider mb-2">Writing Style & Rhetoric</label>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             {writingStyles.map((ws) => {
               const isSelected = writingStyle === ws.id;
@@ -252,17 +252,17 @@ export default function ReviewConfig({
                   disabled={isGenerating}
                   className={`p-3.5 text-left rounded-xl border transition-all duration-150 transform hover:scale-[1.02] active:scale-[0.95] flex items-center justify-between ${
                     isSelected
-                      ? 'border-2 border-aurora-500 bg-aurora-50 shadow-sm'
-                      : 'border-slate-200 bg-white hover:bg-slate-50'
+                      ? 'border-2 border-[#C69B48] bg-[#350E18] text-[#E5C477] shadow-md'
+                      : 'border-[#75502F]/70 bg-[#24090F]/70 hover:border-[#C69B48]/50 text-[#C8B99F]'
                   }`}
                 >
                   <div>
-                    <span className={`font-bold text-sm block ${isSelected ? 'text-aurora-700' : 'text-slate-900'}`}>
+                    <span className={`font-serif font-bold text-sm block ${isSelected ? 'text-[#E5C477]' : 'text-[#F6EBD5]'}`}>
                       {ws.title}
                     </span>
-                    <span className="text-xs text-slate-500 mt-0.5 block">{ws.subtitle}</span>
+                    <span className="text-xs font-academic text-[#C8B99F] mt-0.5 block">{ws.subtitle}</span>
                   </div>
-                  {isSelected && <CheckCircle2 className="w-4 h-4 text-aurora-600 shrink-0 ml-2" />}
+                  {isSelected && <CheckCircle2 className="w-4 h-4 text-[#C69B48] shrink-0 ml-2" />}
                 </button>
               );
             })}
@@ -273,9 +273,9 @@ export default function ReviewConfig({
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-2">
           {/* Date Range Inputs */}
           <div>
-            <label className="label text-sm font-semibold text-slate-900 flex items-center space-x-1.5">
-              <Calendar className="w-4 h-4 text-slate-400" />
-              <span>Publication Date Range</span>
+            <label className="label text-xs font-serif font-bold text-[#E5C477] uppercase tracking-wider flex items-center space-x-1.5">
+              <Calendar className="w-4 h-4 text-[#C69B48]" />
+              <span>Publication Temporal Range</span>
             </label>
             <div className="flex items-center space-x-3 mt-1.5">
               <div className="flex-1">
@@ -290,7 +290,7 @@ export default function ReviewConfig({
                   placeholder="Start Year"
                 />
               </div>
-              <span className="text-slate-400 font-bold">to</span>
+              <span className="text-[#C69B48] font-bold">to</span>
               <div className="flex-1">
                 <input
                   type="number"
@@ -309,11 +309,11 @@ export default function ReviewConfig({
           {/* Max Papers Slider */}
           <div>
             <div className="flex items-center justify-between mb-1.5">
-              <label className="label text-sm font-semibold text-slate-900 flex items-center space-x-1.5">
-                <Sliders className="w-4 h-4 text-slate-400" />
-                <span>Max Papers to Mine</span>
+              <label className="label text-xs font-serif font-bold text-[#E5C477] uppercase tracking-wider flex items-center space-x-1.5">
+                <Sliders className="w-4 h-4 text-[#C69B48]" />
+                <span>Max Publications to Screen</span>
               </label>
-              <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-aurora-50 text-aurora-700 border border-aurora-200 font-mono">
+              <span className="px-2.5 py-0.5 rounded-full text-xs font-mono font-bold bg-[#350E18] text-[#E5C477] border border-[#75502F]">
                 {maxPapers} papers
               </span>
             </div>
@@ -325,9 +325,9 @@ export default function ReviewConfig({
               value={maxPapers}
               onChange={(e) => setMaxPapers(parseInt(e.target.value))}
               disabled={isGenerating}
-              className="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-aurora-600 mt-2.5"
+              className="w-full h-2 bg-[#24090F] border border-[#75502F] rounded-lg appearance-none cursor-pointer accent-[#C69B48] mt-2.5"
             />
-            <div className="flex justify-between text-[11px] text-slate-400 mt-1 font-mono">
+            <div className="flex justify-between text-[11px] text-[#C8B99F] mt-1 font-mono">
               <span>20</span>
               <span>100 (Default)</span>
               <span>200</span>
@@ -336,20 +336,21 @@ export default function ReviewConfig({
         </div>
 
         {/* Submit Button */}
-        <div className="pt-4 border-t border-slate-100 flex items-center justify-end">
+        <div className="pt-4 border-t border-[#75502F]/60 flex items-center justify-end">
           <button
             type="submit"
             disabled={isGenerating || !topic.trim()}
-            className="btn-primary px-8 py-3 text-base font-bold bg-aurora-600 hover:bg-aurora-700 shadow-lg shadow-aurora-600/30 transform hover:scale-[1.02] active:scale-[0.95] disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
+            className="btn-gold px-8 py-3.5 text-xs flex items-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {isGenerating ? (
               <>
-                <span className="w-5 h-5 mr-2.5 border-2 border-white/30 border-t-white rounded-full animate-spin"></span>
-                Synthesizing Review Paper...
+                <span className="w-4 h-4 mr-2 border-2 border-[#24090F]/30 border-t-[#24090F] rounded-full animate-spin"></span>
+                <span>Twelve Agents Synthesizing...</span>
               </>
             ) : (
               <>
-                <Rocket className="w-5 h-5 mr-2" /> Start Generation
+                <Rocket className="w-4 h-4 mr-2 text-[#24090F]" />
+                <span>Begin Research Synthesis</span>
               </>
             )}
           </button>

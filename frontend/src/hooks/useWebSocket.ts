@@ -12,7 +12,9 @@ export function useWebSocket(taskId: string | null) {
       return;
     }
 
-    const wsUrl = `ws://localhost:8000/ws/${taskId}`;
+    const apiUrl = (import.meta.env.VITE_API_URL as string | undefined) || 'http://localhost:8000';
+    const wsBase = apiUrl.replace(/^http/, 'ws');
+    const wsUrl = `${wsBase}/ws/${taskId}`;
     const ws = new WebSocket(wsUrl);
     socketRef.current = ws;
 
