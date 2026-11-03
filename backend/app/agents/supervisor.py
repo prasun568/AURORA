@@ -102,8 +102,8 @@ class SupervisorAgent:
             "task_id": task_id,
             "topic": req_dict.get("topic", "Systematic Review Topic"),
             "review_type": req_dict.get("review_type", "systematic"),
-            "citation_style": req_dict.get("citation_style", "APA"),
-            "template": req_dict.get("template", "standard"),
+            "citation_style": req_dict.get("citation_style") or "IEEE",
+            "template": req_dict.get("template") or "IEEE Conference",
             # "academic" is the default — polish is skipped unless another style is requested
             "writing_style": req_dict.get("writing_style") or "academic",
             "date_start": req_dict.get("date_start") or req_dict.get("date_range_start"),

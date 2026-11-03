@@ -216,7 +216,7 @@ export default function Landing() {
   ];
 
   return (
-    <div className="min-h-screen bg-[#24090F] bg-library-grid text-[#F6EBD5] font-sans antialiased selection:bg-[#C69B48] selection:text-[#24090F] relative overflow-x-hidden">
+    <div className="min-h-screen bg-[#24090F] bg-library-grid text-[#F6EBD5] font-sans antialiased selection:bg-[#C69B48] selection:text-[#24090F] relative overflow-x-hidden pt-20">
       {/* Subtle Golden Candlelight / Atmospheric Vignette Glows */}
       <div className="fixed top-0 left-1/2 -translate-x-1/2 w-[900px] h-[550px] bg-library-vignette pointer-events-none -z-10 animate-candle-glow"></div>
       <div className="fixed top-1/4 -left-40 w-[500px] h-[500px] rounded-full bg-[#E5C477]/5 blur-[140px] pointer-events-none -z-10"></div>
@@ -253,7 +253,7 @@ export default function Landing() {
       {/* ========================================================================= */}
       {/* 1. NAVIGATION BAR (Deep Burgundy with Antique Gold Accents)               */}
       {/* ========================================================================= */}
-      <header className="sticky top-0 z-50 bg-[#24090F]/95 backdrop-blur-md border-b border-[#75502F]/60 transition-all shadow-md shadow-[#24090F]/50 w-full overflow-hidden">
+      <header className="fixed top-0 left-0 right-0 z-50 bg-[#24090F]/95 backdrop-blur-md border-b border-[#75502F]/60 transition-all shadow-lg shadow-[#24090F]/80 w-full">
         <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 h-20 flex items-center justify-between gap-2 sm:gap-4 w-full">
           {/* Brand Identity (Left) */}
           <Link to="/" className="flex items-center space-x-2.5 sm:space-x-3.5 group shrink-0">
@@ -444,7 +444,7 @@ export default function Landing() {
       {/* ========================================================================= */}
       {/* 2. HERO SECTION (Ancient Library Atmosphere & Magical Research Symbol)    */}
       {/* ========================================================================= */}
-      <section id="hero" className="relative pt-16 pb-24 md:pt-28 md:pb-36 overflow-hidden">
+      <section id="hero" className="relative pt-10 pb-20 md:pt-16 md:pb-32 overflow-hidden">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 text-center relative z-10">
           
           {/* Subtle Gothic Arch Ornament */}

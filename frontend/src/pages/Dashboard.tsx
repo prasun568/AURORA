@@ -46,6 +46,7 @@ export default function Dashboard() {
   const [isGenerating, setIsGenerating] = useState<boolean>(false);
   const [result, setResult] = useState<ReviewResult | null>(null);
   const [phases, setPhases] = useState<Phase[]>(INITIAL_PHASES);
+  const [currentConfig, setCurrentConfig] = useState<any>(null);
 
   const { messages, isConnected } = useWebSocket(taskId);
 
@@ -154,6 +155,7 @@ export default function Dashboard() {
   }, [isGenerating]);
 
   const handleStart = async (config: any) => {
+    setCurrentConfig(config);
     setResult(null);
     setPhases(
       INITIAL_PHASES.map((p, idx) =>
@@ -196,7 +198,14 @@ export default function Dashboard() {
 
               {isGenerating && <ProgressTimeline phases={phases} />}
 
-              {result && <ResultViewer result={result} />}
+              {result && (
+                <ResultViewer
+                  result={result}
+                  taskId={taskId || result.task_id}
+                  template={result.template || currentConfig?.template}
+                  citationStyle={result.citation_style || currentConfig?.citation_style}
+                />
+              )}
             </div>
           )}
 

@@ -6,9 +6,21 @@ interface ExportPanelProps {
   taskId?: string;
   markdownContent?: string;
   bibtexContent?: string;
+  topic?: string;
+  citations?: any[];
+  template?: string;
+  citationStyle?: string;
 }
 
-export default function ExportPanel({ taskId, markdownContent, bibtexContent }: ExportPanelProps) {
+export default function ExportPanel({
+  taskId,
+  markdownContent,
+  bibtexContent,
+  topic,
+  citations,
+  template,
+  citationStyle
+}: ExportPanelProps) {
   const [downloadingFormat, setDownloadingFormat] = useState<string | null>(null);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
@@ -32,61 +44,40 @@ export default function ExportPanel({ taskId, markdownContent, bibtexContent }: 
     setDownloadingFormat(format);
     showToast(`Inscribing ${format.toUpperCase()} export...`);
 
+    const payload = {
+      markdown: markdownContent || '',
+      topic: topic || 'Systematic Literature Review',
+      citations: citations || [],
+      bibtex: bibtexContent || '',
+      template: template || 'IEEE Conference',
+      citation_style: citationStyle || 'IEEE'
+    };
+
     try {
       if (format === 'docx') {
-        if (taskId) {
-          try {
-            const blob = await api.exportDocx(taskId);
-            downloadBlob(blob, `aurora-review-${taskId.slice(0, 8)}.docx`);
-            showToast('Word manuscript (.docx) exported successfully!');
-            return;
-          } catch (e) {
-            console.error('DOCX export error:', e);
-          }
-        }
-        if (markdownContent) {
-          const blob = new Blob([markdownContent], { type: 'text/markdown;charset=utf-8' });
-          downloadBlob(blob, 'aurora-review-draft.md');
-          showToast('Markdown draft exported!');
-        } else {
-          showToast('Awaiting manuscript compilation before exporting.');
-        }
+        const blob = await api.exportDocx(taskId, payload);
+        downloadBlob(blob, `aurora-review-${(taskId || 'document').slice(0, 8)}.docx`);
+        showToast('Word manuscript (.docx) exported successfully!');
       } else if (format === 'pdf') {
-        if (taskId) {
-          try {
-            const blob = await api.exportPdf(taskId);
-            downloadBlob(blob, `aurora-review-${taskId.slice(0, 8)}.pdf`);
-            showToast('Academic PDF exported successfully!');
-            return;
-          } catch (e) {
-            console.error('PDF export error:', e);
-          }
-        }
-        if (markdownContent) {
-          const blob = new Blob([markdownContent], { type: 'text/markdown;charset=utf-8' });
-          downloadBlob(blob, 'aurora-review-draft.md');
-          showToast('Markdown draft exported!');
-        } else {
-          showToast('Awaiting manuscript compilation before exporting.');
-        }
+        const blob = await api.exportPdf(taskId, payload);
+        downloadBlob(blob, `aurora-review-${(taskId || 'document').slice(0, 8)}.pdf`);
+        showToast('Academic PDF (.pdf) exported successfully!');
       } else if (format === 'latex') {
-        if (taskId) {
+        const blob = await api.exportLatex(taskId, payload);
+        downloadBlob(blob, `aurora-latex-${(taskId || 'document').slice(0, 8)}.zip`);
+        showToast('LaTeX package (.zip) exported successfully!');
+      } else if (format === 'bibtex') {
+        let bib = bibtexContent;
+        if (!bib && taskId) {
           try {
-            const blob = await api.exportLatex(taskId);
-            downloadBlob(blob as any, `aurora-latex-${taskId.slice(0, 8)}.zip`);
-            showToast('LaTeX package (.zip) exported successfully!');
-            return;
+            bib = await api.exportBibtex(taskId);
           } catch (e) {
-            console.error('LaTeX export error:', e);
+            // fallback
           }
         }
-        if (markdownContent) {
-          const blob = new Blob([markdownContent], { type: 'text/plain;charset=utf-8' });
-          downloadBlob(blob, 'aurora-review.tex');
-          showToast('LaTeX template created!');
+        if (!bib) {
+          bib = `@article{aurora2026,\n  title={Systematic Literature Review},\n  author={AURORA Multi-Agent Framework},\n  year={2026}\n}`;
         }
-      } else if (format === 'bibtex') {
-        const bib = bibtexContent || `@article{aurora2026,\n  title={Systematic Literature Review},\n  author={AURORA Multi-Agent Framework},\n  year={2026}\n}`;
         const blob = new Blob([bib], { type: 'application/x-bibtex;charset=utf-8' });
         downloadBlob(blob, 'references.bib');
         showToast('BibTeX library exported!');

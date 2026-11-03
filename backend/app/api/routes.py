@@ -304,13 +304,17 @@ async def get_review_result(task_id: str):
     if task_id in task_registry and task_registry[task_id].get("final_state"):
         state = task_registry[task_id]["final_state"]
         return {
+            "task_id": task_id,
+            "topic": state.get("topic") or "Systematic Literature Review",
             "content": state.get("draft", ""),
             "polished_content": state.get("polished_draft") or state.get("draft", ""),
             "citations": state.get("citations", []),
             "confidence": state.get("confidence", 0.9),
             "burstiness": state.get("burstiness", 0.0),
             "banned_words": state.get("banned_words_found", []),
-            "bibtex": state.get("bibtex", "")
+            "bibtex": state.get("bibtex", ""),
+            "template": state.get("template") or "IEEE Conference",
+            "citation_style": state.get("citation_style") or "IEEE"
         }
 
     # Check database
@@ -318,14 +322,21 @@ async def get_review_result(task_id: str):
     if not output:
         raise HTTPException(status_code=404, detail="Review output not found for this task")
 
+    task = await db_get_task(task_id)
+    topic = task.get("topic") if task else "Systematic Literature Review"
+
     return {
+        "task_id": task_id,
+        "topic": topic,
         "content": output.get("content_markdown", ""),
         "polished_content": output.get("content_markdown", ""),
         "citations": output.get("citations", []),
         "confidence": output.get("confidence", 0.9),
         "burstiness": 0.5,
         "banned_words": [],
-        "bibtex": output.get("bibtex", "")
+        "bibtex": output.get("bibtex", ""),
+        "template": (task.get("template") if task else None) or "IEEE Conference",
+        "citation_style": (task.get("citation_style") if task else None) or "IEEE"
     }
 
 
@@ -383,6 +394,8 @@ async def export_pdf(task_id: str):
     topic = "Systematic Literature Review"
     citations = []
     bibtex = ""
+    template = "IEEE Conference"
+    citation_style = "IEEE"
 
     if task_id in task_registry and task_registry[task_id].get("final_state"):
         state = task_registry[task_id]["final_state"]
@@ -390,6 +403,8 @@ async def export_pdf(task_id: str):
         topic = state.get("topic") or topic
         citations = state.get("citations", [])
         bibtex = state.get("bibtex", "")
+        template = state.get("template") or template
+        citation_style = state.get("citation_style") or citation_style
     else:
         output = await db_get_review_output(task_id)
         if output:
@@ -399,11 +414,20 @@ async def export_pdf(task_id: str):
         task = await db_get_task(task_id)
         if task:
             topic = task.get("topic") or topic
+            template = task.get("template") or template
+            citation_style = task.get("citation_style") or citation_style
 
     if not md_content:
         raise HTTPException(status_code=404, detail="Review document not found for export")
 
-    pdf_bytes = generate_pdf(md_content, topic, citations, bibtex)
+    pdf_bytes = generate_pdf(
+        md_content,
+        topic,
+        citations,
+        bibtex,
+        template=template,
+        citation_style=citation_style
+    )
     return Response(
         content=pdf_bytes,
         media_type="application/pdf",
@@ -419,12 +443,16 @@ async def export_docx(task_id: str):
     md_content = ""
     topic = "Systematic Literature Review"
     citations = []
+    template = "IEEE Conference"
+    citation_style = "IEEE"
 
     if task_id in task_registry and task_registry[task_id].get("final_state"):
         state = task_registry[task_id]["final_state"]
         md_content = state.get("polished_draft") or state.get("draft") or ""
         topic = state.get("topic") or topic
         citations = state.get("citations", [])
+        template = state.get("template") or template
+        citation_style = state.get("citation_style") or citation_style
     else:
         output = await db_get_review_output(task_id)
         if output:
@@ -433,11 +461,19 @@ async def export_docx(task_id: str):
         task = await db_get_task(task_id)
         if task:
             topic = task.get("topic") or topic
+            template = task.get("template") or template
+            citation_style = task.get("citation_style") or citation_style
 
     if not md_content:
         raise HTTPException(status_code=404, detail="Review document not found for export")
 
-    docx_bytes = generate_docx(md_content, topic, citations)
+    docx_bytes = generate_docx(
+        md_content,
+        topic,
+        citations,
+        template=template,
+        citation_style=citation_style
+    )
     return Response(
         content=docx_bytes,
         media_type="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
@@ -454,6 +490,8 @@ async def export_latex(task_id: str):
     topic = "Systematic Literature Review"
     citations = []
     bibtex = ""
+    template = "IEEE Conference"
+    citation_style = "IEEE"
 
     if task_id in task_registry and task_registry[task_id].get("final_state"):
         state = task_registry[task_id]["final_state"]
@@ -461,6 +499,8 @@ async def export_latex(task_id: str):
         topic = state.get("topic") or topic
         citations = state.get("citations", [])
         bibtex = state.get("bibtex", "")
+        template = state.get("template") or template
+        citation_style = state.get("citation_style") or citation_style
     else:
         output = await db_get_review_output(task_id)
         if output:
@@ -470,11 +510,20 @@ async def export_latex(task_id: str):
         task = await db_get_task(task_id)
         if task:
             topic = task.get("topic") or topic
+            template = task.get("template") or template
+            citation_style = task.get("citation_style") or citation_style
 
     if not md_content:
         raise HTTPException(status_code=404, detail="Review document not found for export")
 
-    latex_zip = generate_latex_zip(md_content, topic, citations, bibtex)
+    latex_zip = generate_latex_zip(
+        md_content,
+        topic,
+        citations,
+        bibtex,
+        template=template,
+        citation_style=citation_style
+    )
     return Response(
         content=latex_zip,
         media_type="application/zip",
@@ -501,4 +550,83 @@ async def export_bibtex(task_id: str):
         content=bibtex,
         media_type="application/x-bibtex",
         headers={"Content-Disposition": f"attachment; filename=references-{task_id[:8]}.bib"}
+    )
+
+
+# --- Direct POST Export Endpoints (Guaranteed Non-Empty Real Format Delivery) ---
+
+class ExportDirectRequest(BaseModel):
+    markdown: str
+    topic: Optional[str] = "Systematic Literature Review"
+    citations: Optional[List[Dict[str, Any]]] = None
+    bibtex: Optional[str] = None
+    template: Optional[str] = "IEEE Conference"
+    citation_style: Optional[str] = "IEEE"
+
+
+@router.post("/export/pdf")
+async def export_pdf_direct(req: ExportDirectRequest):
+    from fastapi.responses import Response
+    from app.utils.exporters import generate_pdf
+
+    if not req.markdown.strip():
+        raise HTTPException(status_code=400, detail="Markdown content is required for PDF export")
+
+    pdf_bytes = generate_pdf(
+        markdown_text=req.markdown,
+        topic=req.topic or "Systematic Literature Review",
+        citations=req.citations or [],
+        bibtex=req.bibtex or "",
+        template=req.template or "IEEE Conference",
+        citation_style=req.citation_style or "IEEE"
+    )
+    return Response(
+        content=pdf_bytes,
+        media_type="application/pdf",
+        headers={"Content-Disposition": "attachment; filename=aurora-review.pdf"}
+    )
+
+
+@router.post("/export/docx")
+async def export_docx_direct(req: ExportDirectRequest):
+    from fastapi.responses import Response
+    from app.utils.exporters import generate_docx
+
+    if not req.markdown.strip():
+        raise HTTPException(status_code=400, detail="Markdown content is required for Word DOCX export")
+
+    docx_bytes = generate_docx(
+        markdown_text=req.markdown,
+        topic=req.topic or "Systematic Literature Review",
+        citations=req.citations or [],
+        template=req.template or "IEEE Conference",
+        citation_style=req.citation_style or "IEEE"
+    )
+    return Response(
+        content=docx_bytes,
+        media_type="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+        headers={"Content-Disposition": "attachment; filename=aurora-review.docx"}
+    )
+
+
+@router.post("/export/latex")
+async def export_latex_direct(req: ExportDirectRequest):
+    from fastapi.responses import Response
+    from app.utils.exporters import generate_latex_zip
+
+    if not req.markdown.strip():
+        raise HTTPException(status_code=400, detail="Markdown content is required for LaTeX export")
+
+    latex_zip = generate_latex_zip(
+        markdown_text=req.markdown,
+        topic=req.topic or "Systematic Literature Review",
+        citations=req.citations or [],
+        bibtex=req.bibtex or "",
+        template=req.template or "IEEE Conference",
+        citation_style=req.citation_style or "IEEE"
+    )
+    return Response(
+        content=latex_zip,
+        media_type="application/zip",
+        headers={"Content-Disposition": "attachment; filename=aurora-latex.zip"}
     )

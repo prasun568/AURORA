@@ -7,15 +7,21 @@ import ExportPanel from './ExportPanel';
 
 interface ResultViewerProps {
   result: ReviewResult;
+  taskId?: string;
+  template?: string;
+  citationStyle?: string;
 }
 
-export default function ResultViewer({ result }: ResultViewerProps) {
+export default function ResultViewer({ result, taskId, template, citationStyle }: ResultViewerProps) {
   const [activeTab, setActiveTab] = useState<'paper' | 'citations' | 'reasoning'>('paper');
   const [copied, setCopied] = useState(false);
 
   const displayContent = result.polished_content || result.content || '';
   const wordCount = displayContent.trim() ? displayContent.trim().split(/\s+/).length : 0;
   const pageCount = Math.max(1, Math.ceil(wordCount / 500));
+
+  const resolvedTemplate = template || result.template || 'IEEE Conference';
+  const resolvedCitationStyle = citationStyle || result.citation_style || 'IEEE';
 
   const handleCopy = () => {
     navigator.clipboard.writeText(displayContent);
@@ -78,15 +84,25 @@ export default function ResultViewer({ result }: ResultViewerProps) {
 
       {/* 3. Export Controls Bar */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 p-4 bg-[#350E18] border border-[#75502F] rounded-xl">
-        <div className="flex items-center space-x-2">
+        <div className="flex flex-wrap items-center gap-2">
           <span className="text-xs font-serif font-bold uppercase tracking-widest text-[#E5C477]">
-            Export Manuscript:
+            Format:
+          </span>
+          <span className="px-2.5 py-0.5 rounded-full text-[11px] font-serif font-bold uppercase tracking-wider bg-[#24090F] text-[#F0E3C6] border border-[#C69B48]">
+            {resolvedTemplate}
+          </span>
+          <span className="px-2 py-0.5 rounded-full text-[10.5px] font-serif uppercase tracking-wider bg-[#24090F]/80 text-[#C8B99F] border border-[#75502F]">
+            {resolvedCitationStyle} Style
           </span>
         </div>
         <ExportPanel
-          taskId={result.task_id}
+          taskId={taskId || result.task_id}
           markdownContent={displayContent}
           bibtexContent={result.bibtex}
+          topic={result.topic}
+          citations={result.citations}
+          template={resolvedTemplate}
+          citationStyle={resolvedCitationStyle}
         />
       </div>
 

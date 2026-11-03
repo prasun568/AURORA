@@ -68,6 +68,8 @@ export interface ReviewResult {
   bibtex?: string;
   task_id?: string;
   topic?: string;
+  template?: string;
+  citation_style?: string;
 }
 
 export interface WSMessage {

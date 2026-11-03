@@ -21,29 +21,29 @@ export default function CitationPanel({ citations }: CitationPanelProps) {
         const conf = typeof cite.confidence === 'number' ? cite.confidence : 0.85;
         const confPercent = Math.round(conf * 100);
 
-        const isVerified = cite.status === 'VERIFIED' || cite.verified;
-        const isPartial = cite.status === 'PARTIAL' || (!cite.verified && conf >= 0.35);
+        const isVerified = cite.status === 'VERIFIED' || cite.verified === true;
+        const isPartial = !isVerified && (cite.status === 'PARTIAL' || conf >= 0.35);
 
         let statusBadge = (
-          <span className="inline-flex items-center space-x-1.5 px-3 py-1 rounded-full text-[10.5px] font-serif font-bold uppercase tracking-wider bg-[#072412] text-[#4ADE80] border border-[#166534] shadow-[0_0_10px_rgba(74,222,128,0.25)]">
-            <CheckCircle2 className="w-3.5 h-3.5 text-[#4ADE80]" />
+          <span className="inline-flex items-center space-x-1.5 px-3 py-1 rounded-full text-[10.5px] font-serif font-bold uppercase tracking-wider bg-[#062413] text-[#34D399] border border-[#059669] shadow-[0_0_12px_rgba(5,150,105,0.35)]">
+            <CheckCircle2 className="w-3.5 h-3.5 text-[#34D399]" />
             <span>VERIFIED</span>
           </span>
         );
-        let borderClass = 'border-l-4 border-l-[#22C55E]';
-        let barGradient = 'bg-gradient-to-r from-[#14532D] to-[#22C55E]';
-        let percentColor = 'text-[#4ADE80]';
+        let borderClass = 'border-l-4 border-l-[#059669]';
+        let barGradient = 'bg-gradient-to-r from-[#064E3B] to-[#10B981]';
+        let percentColor = 'text-[#34D399]';
 
         if (isPartial) {
           statusBadge = (
-            <span className="inline-flex items-center space-x-1.5 px-3 py-1 rounded-full text-[10.5px] font-serif font-bold uppercase tracking-wider bg-[#2D1F07] text-[#FACC15] border border-[#A16207] shadow-[0_0_10px_rgba(250,204,21,0.25)]">
-              <AlertTriangle className="w-3.5 h-3.5 text-[#FACC15]" />
+            <span className="inline-flex items-center space-x-1.5 px-3 py-1 rounded-full text-[10.5px] font-serif font-bold uppercase tracking-wider bg-[#352506] text-[#FDE047] border border-[#CA8A04] shadow-[0_0_12px_rgba(202,138,4,0.35)]">
+              <AlertTriangle className="w-3.5 h-3.5 text-[#FDE047]" />
               <span>PARTIAL</span>
             </span>
           );
-          borderClass = 'border-l-4 border-l-[#EAB308]';
-          barGradient = 'bg-gradient-to-r from-[#B45309] to-[#FACC15]';
-          percentColor = 'text-[#FACC15]';
+          borderClass = 'border-l-4 border-l-[#CA8A04]';
+          barGradient = 'bg-gradient-to-r from-[#854D0E] to-[#FACC15]';
+          percentColor = 'text-[#FDE047]';
         } else if (!isVerified) {
           statusBadge = (
             <span className="inline-flex items-center space-x-1.5 px-3 py-1 rounded-full text-[10.5px] font-serif font-bold uppercase tracking-wider bg-[#24090F] text-[#F87171] border border-[#991B1B]">

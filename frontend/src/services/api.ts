@@ -86,24 +86,73 @@ export const api = {
     return res.data;
   },
 
-  exportDocx: async (taskId: string): Promise<Blob> => {
-    const res = await client.get(`/api/export/docx/${taskId}`, { responseType: 'blob' });
-    return res.data;
+  exportDocx: async (
+    taskId?: string,
+    payload?: { markdown: string; topic?: string; citations?: any[]; template?: string; citation_style?: string }
+  ): Promise<Blob> => {
+    if (taskId) {
+      try {
+        const res = await client.get(`/api/export/docx/${taskId}`, { responseType: 'blob' });
+        if (res.data && res.data.size > 0) return res.data;
+      } catch (err) {
+        console.warn('GET /api/export/docx/{id} failed, trying direct POST:', err);
+      }
+    }
+    if (payload?.markdown) {
+      const res = await client.post('/api/export/docx', payload, { responseType: 'blob' });
+      return res.data;
+    }
+    throw new Error('No task ID or markdown provided for Word DOCX export');
   },
 
-  exportPdf: async (taskId: string): Promise<Blob> => {
-    const res = await client.get(`/api/export/pdf/${taskId}`, { responseType: 'blob' });
-    return res.data;
+  exportPdf: async (
+    taskId?: string,
+    payload?: { markdown: string; topic?: string; citations?: any[]; bibtex?: string; template?: string; citation_style?: string }
+  ): Promise<Blob> => {
+    if (taskId) {
+      try {
+        const res = await client.get(`/api/export/pdf/${taskId}`, { responseType: 'blob' });
+        if (res.data && res.data.size > 0) return res.data;
+      } catch (err) {
+        console.warn('GET /api/export/pdf/{id} failed, trying direct POST:', err);
+      }
+    }
+    if (payload?.markdown) {
+      const res = await client.post('/api/export/pdf', payload, { responseType: 'blob' });
+      return res.data;
+    }
+    throw new Error('No task ID or markdown provided for PDF export');
   },
 
-  exportLatex: async (taskId: string): Promise<Blob> => {
-    const res = await client.get(`/api/export/latex/${taskId}`, { responseType: 'blob' });
-    return res.data;
+  exportLatex: async (
+    taskId?: string,
+    payload?: { markdown: string; topic?: string; citations?: any[]; bibtex?: string; template?: string; citation_style?: string }
+  ): Promise<Blob> => {
+    if (taskId) {
+      try {
+        const res = await client.get(`/api/export/latex/${taskId}`, { responseType: 'blob' });
+        if (res.data && res.data.size > 0) return res.data;
+      } catch (err) {
+        console.warn('GET /api/export/latex/{id} failed, trying direct POST:', err);
+      }
+    }
+    if (payload?.markdown) {
+      const res = await client.post('/api/export/latex', payload, { responseType: 'blob' });
+      return res.data;
+    }
+    throw new Error('No task ID or markdown provided for LaTeX export');
   },
 
-  exportBibtex: async (taskId: string): Promise<string> => {
-    const res = await client.get(`/api/export/bibtex/${taskId}`, { responseType: 'text' });
-    return res.data;
+  exportBibtex: async (taskId?: string): Promise<string> => {
+    if (taskId) {
+      try {
+        const res = await client.get(`/api/export/bibtex/${taskId}`, { responseType: 'text' });
+        return res.data;
+      } catch (err) {
+        console.warn('GET /api/export/bibtex failed:', err);
+      }
+    }
+    return '';
   },
 
   checkHealth: async (): Promise<boolean> => {

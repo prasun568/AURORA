@@ -13,29 +13,52 @@ def _clean_markdown(text: str) -> str:
     return text.strip()
 
 
-def generate_pdf(markdown_text: str, topic: str = "Systematic Literature Review", citations: Optional[List[Dict[str, Any]]] = None, bibtex: Optional[str] = None) -> bytes:
-    """Generates a publication-grade academic PDF using PyMuPDF."""
+def generate_pdf(
+    markdown_text: str,
+    topic: str = "Systematic Literature Review",
+    citations: Optional[List[Dict[str, Any]]] = None,
+    bibtex: Optional[str] = None,
+    template: str = "IEEE Conference",
+    citation_style: str = "IEEE"
+) -> bytes:
+    """Generates a publication-grade academic PDF formatted according to the selected template & citation style."""
     doc = pymupdf.open()
     page_width = 595.0
     page_height = 842.0
     margin_left = 54.0
     margin_right = 54.0
-    usable_width = page_width - margin_left - margin_right
 
     current_page = doc.new_page(width=page_width, height=page_height)
     page_num = 1
+
+    template_str = template or "IEEE Conference"
+    style_str = citation_style or "IEEE"
+    template_lower = template_str.lower()
+
+    if "ieee" in template_lower:
+        header_title = f"IEEE {template_str.upper()} — RESEARCH PROCEEDINGS"
+    elif "acm" in template_lower:
+        header_title = "ACM PROCEEDINGS — ADVANCED MULTI-AGENT SYNTHESIS"
+    elif "springer" in template_lower or "lncs" in template_lower:
+        header_title = "SPRINGER NATURE LECTURE NOTES IN COMPUTER SCIENCE"
+    elif "apa" in template_lower:
+        header_title = "AMERICAN PSYCHOLOGICAL ASSOCIATION (APA 7TH ED.) MANUSCRIPT"
+    elif "elsevier" in template_lower:
+        header_title = "ELSEVIER SCIENCEDIRECT — SYSTEMATIC LITERATURE REVIEW"
+    else:
+        header_title = f"{template_str.upper()} — SCHOLARLY MANUSCRIPT"
 
     def draw_header_footer(page, p_num):
         # Academic Header
         page.draw_line(
             pymupdf.Point(margin_left, 45),
             pymupdf.Point(page_width - margin_right, 45),
-            color=(0.46, 0.31, 0.18),  # Antique Gold / Bronze
+            color=(0.46, 0.31, 0.18),  # Antique Gold
             width=0.75
         )
         page.insert_text(
             pymupdf.Point(margin_left, 40),
-            "AURORA RESEARCH INTELLIGENCE — SYSTEMATIC LITERATURE REVIEW",
+            header_title,
             fontsize=8,
             fontname="helv",
             color=(0.45, 0.40, 0.35)
@@ -50,7 +73,7 @@ def generate_pdf(markdown_text: str, topic: str = "Systematic Literature Review"
         )
         page.insert_text(
             pymupdf.Point(margin_left, page_height - 32),
-            "Verified via AURORA VeriCite Engine | CrossRef & PRISMA 2020 Compliant",
+            f"Style: {style_str} | Verified via AURORA VeriCite Engine | PRISMA 2020 Compliant",
             fontsize=8,
             fontname="helv",
             color=(0.45, 0.40, 0.35)
@@ -74,13 +97,13 @@ def generate_pdf(markdown_text: str, topic: str = "Systematic Literature Review"
         title_text,
         fontsize=18,
         fontname="times-bold",
-        color=(0.14, 0.04, 0.06), # Deep Burgundy
+        color=(0.14, 0.04, 0.06),
         align=pymupdf.TEXT_ALIGN_CENTER
     )
     y += 65.0
 
     # Metadata & Date
-    meta_text = f"Compiled by AURORA Autonomous Multi-Agent Framework • Date: {datetime.now().strftime('%B %d, %Y')}"
+    meta_text = f"Venue Format: {template_str} • Citations: {style_str} • Inscribed: {datetime.now().strftime('%B %d, %Y')}"
     current_page.insert_text(
         pymupdf.Point(margin_left, y),
         meta_text,
@@ -103,7 +126,15 @@ def generate_pdf(markdown_text: str, topic: str = "Systematic Literature Review"
         if para.startswith("#"):
             level = len(para) - len(para.lstrip("#"))
             heading_text = para.lstrip("#").strip()
-            font_size = 14 if level <= 2 else 12
+
+            # Apply template-specific heading numbering
+            if "ieee" in template_lower and level == 2:
+                # Add Roman numeral if not present
+                heading_display = heading_text.upper()
+            else:
+                heading_display = heading_text
+
+            font_size = 13 if level <= 2 else 11
             font_name = "times-bold"
             height_needed = 35.0
 
@@ -117,15 +148,13 @@ def generate_pdf(markdown_text: str, topic: str = "Systematic Literature Review"
             heading_rect = pymupdf.Rect(margin_left, y, page_width - margin_right, y + 25)
             current_page.insert_textbox(
                 heading_rect,
-                heading_text,
+                heading_display,
                 fontsize=font_size,
                 fontname=font_name,
                 color=(0.20, 0.05, 0.08)
             )
             y += 25.0
         else:
-            # Body Paragraph
-            # Estimate height: approx 15 chars per line at 10pt = ~90 chars per line
             lines = max(1, len(para) // 85 + 1)
             para_height = lines * 14.0 + 8.0
 
@@ -146,7 +175,7 @@ def generate_pdf(markdown_text: str, topic: str = "Systematic Literature Review"
             )
             y += para_height + 4.0
 
-    # Add References Section if citations provided
+    # References Section Formatted in chosen Citation Style
     if citations:
         if y + 80 > page_height - 65:
             current_page = doc.new_page(width=page_width, height=page_height)
@@ -158,7 +187,7 @@ def generate_pdf(markdown_text: str, topic: str = "Systematic Literature Review"
         ref_heading_rect = pymupdf.Rect(margin_left, y, page_width - margin_right, y + 25)
         current_page.insert_textbox(
             ref_heading_rect,
-            "References & Verified Bibliographic Index",
+            f"References ({style_str} Standard)",
             fontsize=13,
             fontname="times-bold",
             color=(0.20, 0.05, 0.08)
@@ -170,9 +199,17 @@ def generate_pdf(markdown_text: str, topic: str = "Systematic Literature Review"
             authors = ", ".join(c.get("authors", [])) if c.get("authors") else "Research Authors"
             year = c.get("year") or "2024"
             doi = c.get("doi") or "N/A"
-            status = c.get("status") or "VERIFIED"
+            venue = c.get("venue") or "Academic Proceedings"
 
-            ref_entry = f"[{i + 1}] {authors} ({year}). \"{title}\". DOI: {doi} [{status}]"
+            if "apa" in style_str.lower():
+                ref_entry = f"{authors} ({year}). {title}. {venue}. https://doi.org/{doi}"
+            elif "mla" in style_str.lower():
+                ref_entry = f"{authors}. \"{title}.\" {venue}, {year}. DOI: {doi}."
+            elif "harvard" in style_str.lower():
+                ref_entry = f"{authors}, {year}. {title}. {venue}. Available at: <https://doi.org/{doi}>"
+            else: # IEEE / Vancouver default
+                ref_entry = f"[{i + 1}] {authors}, \"{title},\" in {venue}, {year}. doi: {doi}."
+
             ref_height = 24.0
 
             if y + ref_height > page_height - 65:
@@ -194,15 +231,24 @@ def generate_pdf(markdown_text: str, topic: str = "Systematic Literature Review"
     return doc.tobytes()
 
 
-def generate_docx(markdown_text: str, topic: str = "Systematic Literature Review", citations: Optional[List[Dict[str, Any]]] = None) -> bytes:
-    """Generates a genuine OpenXML Microsoft Word document (.docx)."""
+def generate_docx(
+    markdown_text: str,
+    topic: str = "Systematic Literature Review",
+    citations: Optional[List[Dict[str, Any]]] = None,
+    template: str = "IEEE Conference",
+    citation_style: str = "IEEE"
+) -> bytes:
+    """Generates a genuine OpenXML Microsoft Word document (.docx) styled for the chosen academic venue."""
     cleaned = _clean_markdown(markdown_text)
     paragraphs = cleaned.split("\n\n")
+
+    template_str = template or "IEEE Conference"
+    style_str = citation_style or "IEEE"
+    template_lower = template_str.lower()
 
     def escape_xml(s: str) -> str:
         return s.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;").replace('"', "&quot;")
 
-    # Construct Document XML elements
     body_xml_parts = []
 
     # Title Paragraph
@@ -217,7 +263,7 @@ def generate_docx(markdown_text: str, topic: str = "Systematic Literature Review
                 <w:rPr>
                     <w:rFonts w:ascii="Times New Roman" w:hAnsi="Times New Roman"/>
                     <w:b/>
-                    <w:sz w:val="48"/>
+                    <w:sz w:val="44"/>
                     <w:color w:val="24090F"/>
                 </w:rPr>
                 <w:t>{safe_title}</w:t>
@@ -225,8 +271,8 @@ def generate_docx(markdown_text: str, topic: str = "Systematic Literature Review
         </w:p>
     """)
 
-    # Subtitle / Metadata
-    meta_info = f"Generated by AURORA Autonomous Multi-Agent Framework • {datetime.now().strftime('%B %d, %Y')}"
+    # Subtitle / Venue Template Info
+    meta_info = f"Formatted for: {template_str} • Citation Style: {style_str} • Date: {datetime.now().strftime('%B %d, %Y')}"
     body_xml_parts.append(f"""
         <w:p>
             <w:pPr>
@@ -253,8 +299,13 @@ def generate_docx(markdown_text: str, topic: str = "Systematic Literature Review
 
         if para.startswith("#"):
             level = len(para) - len(para.lstrip("#"))
-            heading_text = escape_xml(para.lstrip("#").strip())
-            sz = "32" if level <= 2 else "26"
+            heading_text = para.lstrip("#").strip()
+
+            if "ieee" in template_lower and level == 2:
+                heading_text = heading_text.upper()
+
+            safe_heading = escape_xml(heading_text)
+            sz = "30" if level <= 2 else "24"
             before = "360" if level <= 2 else "240"
             body_xml_parts.append(f"""
                 <w:p>
@@ -268,7 +319,7 @@ def generate_docx(markdown_text: str, topic: str = "Systematic Literature Review
                             <w:sz w:val="{sz}"/>
                             <w:color w:val="24090F"/>
                         </w:rPr>
-                        <w:t>{heading_text}</w:t>
+                        <w:t>{safe_heading}</w:t>
                     </w:r>
                 </w:p>
             """)
@@ -291,7 +342,7 @@ def generate_docx(markdown_text: str, topic: str = "Systematic Literature Review
 
     # Citations in Word
     if citations:
-        body_xml_parts.append("""
+        body_xml_parts.append(f"""
             <w:p>
                 <w:pPr>
                     <w:spacing w:before="400" w:after="160"/>
@@ -300,10 +351,10 @@ def generate_docx(markdown_text: str, topic: str = "Systematic Literature Review
                     <w:rPr>
                         <w:rFonts w:ascii="Times New Roman" w:hAnsi="Times New Roman"/>
                         <w:b/>
-                        <w:sz w:val="30"/>
+                        <w:sz w:val="28"/>
                         <w:color w:val="24090F"/>
                     </w:rPr>
-                    <w:t>References &amp; Verified Bibliographic Index</w:t>
+                    <w:t>References ({escape_xml(style_str)} Standard)</w:t>
                 </w:r>
             </w:p>
         """)
@@ -313,9 +364,17 @@ def generate_docx(markdown_text: str, topic: str = "Systematic Literature Review
             authors = ", ".join(c.get("authors", [])) if c.get("authors") else "Research Authors"
             year = c.get("year") or "2024"
             doi = c.get("doi") or "N/A"
-            status = c.get("status") or "VERIFIED"
+            venue = c.get("venue") or "Scholarly Venue"
 
-            ref_entry = escape_xml(f"[{i + 1}] {authors} ({year}). \"{title}\". DOI: {doi} [{status}]")
+            if "apa" in style_str.lower():
+                ref_entry = f"{authors} ({year}). {title}. {venue}. https://doi.org/{doi}"
+            elif "mla" in style_str.lower():
+                ref_entry = f"{authors}. \"{title}.\" {venue}, {year}. DOI: {doi}."
+            elif "harvard" in style_str.lower():
+                ref_entry = f"{authors}, {year}. {title}. {venue}. Available at: <https://doi.org/{doi}>"
+            else: # IEEE / Vancouver default
+                ref_entry = f"[{i + 1}] {authors}, \"{title},\" in {venue}, {year}. doi: {doi}."
+
             body_xml_parts.append(f"""
                 <w:p>
                     <w:pPr>
@@ -327,7 +386,7 @@ def generate_docx(markdown_text: str, topic: str = "Systematic Literature Review
                             <w:rFonts w:ascii="Times New Roman" w:hAnsi="Times New Roman"/>
                             <w:sz w:val="20"/>
                         </w:rPr>
-                        <w:t>{ref_entry}</w:t>
+                        <w:t>{escape_xml(ref_entry)}</w:t>
                     </w:r>
                 </w:p>
             """)
@@ -364,10 +423,46 @@ def generate_docx(markdown_text: str, topic: str = "Systematic Literature Review
     return buf.getvalue()
 
 
-def generate_latex_zip(markdown_text: str, topic: str = "Systematic Literature Review", citations: Optional[List[Dict[str, Any]]] = None, bibtex: Optional[str] = None) -> bytes:
-    """Generates an IEEE/ACM-compliant LaTeX manuscript package in a ZIP archive."""
+def generate_latex_zip(
+    markdown_text: str,
+    topic: str = "Systematic Literature Review",
+    citations: Optional[List[Dict[str, Any]]] = None,
+    bibtex: Optional[str] = None,
+    template: str = "IEEE Conference",
+    citation_style: str = "IEEE"
+) -> bytes:
+    """Generates an official LaTeX package matching the user's selected publishing venue template."""
     cleaned = _clean_markdown(markdown_text)
     paragraphs = cleaned.split("\n\n")
+
+    template_str = template or "IEEE Conference"
+    template_lower = template_str.lower()
+
+    # Determine exact document class & bibliography style for selected template
+    if "acm" in template_lower:
+        doc_class = "\\documentclass[sigconf]{acmart}"
+        bib_style = "\\bibliographystyle{ACM-Reference-Format}"
+        extra_packages = ""
+    elif "springer" in template_lower or "lncs" in template_lower:
+        doc_class = "\\documentclass{llncs}"
+        bib_style = "\\bibliographystyle{splncs04}"
+        extra_packages = "\\usepackage{amsmath,amssymb}"
+    elif "apa" in template_lower:
+        doc_class = "\\documentclass[man,floatsintext]{apa7}"
+        bib_style = "\\bibliographystyle{apacite}"
+        extra_packages = "\\usepackage[natbibapa]{apacite}"
+    elif "elsevier" in template_lower:
+        doc_class = "\\documentclass[preprint,12pt]{elsarticle}"
+        bib_style = "\\bibliographystyle{elsarticle-num}"
+        extra_packages = "\\usepackage{amsmath,amssymb}"
+    elif "journal" in template_lower:
+        doc_class = "\\documentclass[journal]{IEEEtran}"
+        bib_style = "\\bibliographystyle{IEEEtran}"
+        extra_packages = "\\usepackage{cite}\\usepackage{amsmath,amssymb}"
+    else:  # IEEE Conference (default)
+        doc_class = "\\documentclass[conference]{IEEEtran}"
+        bib_style = "\\bibliographystyle{IEEEtran}"
+        extra_packages = "\\usepackage{cite}\\usepackage{amsmath,amssymb}"
 
     # Build LaTeX sections
     tex_body = []
@@ -378,7 +473,6 @@ def generate_latex_zip(markdown_text: str, topic: str = "Systematic Literature R
         if para.startswith("#"):
             level = len(para) - len(para.lstrip("#"))
             heading_text = para.lstrip("#").strip()
-            # Escape LaTeX special chars
             safe_heading = heading_text.replace("_", "\\_").replace("&", "\\&").replace("%", "\\%")
             if level <= 1:
                 tex_body.append(f"\\section*{{{safe_heading}}}\n")
@@ -393,11 +487,10 @@ def generate_latex_zip(markdown_text: str, topic: str = "Systematic Literature R
             tex_body.append(f"{safe_para}\n\n")
 
     safe_title = (topic or "Systematic Literature Review").replace("_", "\\_").replace("&", "\\&")
-    
-    tex_content = f"""\\documentclass[conference]{{IEEEtran}}
+
+    tex_content = f"""{doc_class}
 \\usepackage[utf8]{{inputenc}}
-\\usepackage{{cite}}
-\\usepackage{{amsmath,amssymb,amsfonts}}
+{extra_packages}
 \\usepackage{{graphicx}}
 \\usepackage{{hyperref}}
 
@@ -405,16 +498,16 @@ def generate_latex_zip(markdown_text: str, topic: str = "Systematic Literature R
 
 \\title{{{safe_title}}}
 
-\\author{{\\IEEEauthorblockN{{AURORA Autonomous Research Intelligence}}\\\\
-\\IEEEauthorblockA{{\\textit{{Multi-Agent Academic Synthesis Framework}}\\\\
-Generated: {datetime.now().strftime('%B %d, %Y')}\\\\
-Verified via VeriCite Engine}}}}
+\\author{{AURORA Autonomous Research Intelligence\\\\
+\\textit{{Venue Template: {template_str}}}\\\\
+Compiled: {datetime.now().strftime('%B %d, %Y')}\\\\
+Verified via VeriCite Engine}}
 
 \\maketitle
 
 {''.join(tex_body)}
 
-\\bibliographystyle{{IEEEtran}}
+{bib_style}
 \\bibliography{{references}}
 
 \\end{{document}}
@@ -440,9 +533,12 @@ Verified via VeriCite Engine}}}}
 
     final_bib = "\n\n".join(bib_entries) if bib_entries else "% No citations indexed\n"
 
-    readme = """AURORA LaTeX Package
-====================
-To compile this academic manuscript to PDF:
+    readme = f"""AURORA LaTeX Package ({template_str})
+========================================
+Template: {template_str}
+Citation Style: {citation_style}
+
+To compile this manuscript to PDF:
   pdflatex manuscript.tex
   bibtex manuscript
   pdflatex manuscript.tex
@@ -456,4 +552,3 @@ To compile this academic manuscript to PDF:
         z.writestr("README.txt", readme)
 
     return buf.getvalue()
-
